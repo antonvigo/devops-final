@@ -1,0 +1,67 @@
+<source>
+  @type tail
+  @id tail-nginx-access
+  format none
+  path /var/log/nginx/access.log
+  tag grl.nginx_access
+  pos_file /var/log/td-agent/nginx.access.pos
+  time_key time_local
+</source>
+
+<source>
+  @type tail
+  @id tail-nginx-error
+  format none
+  path /var/log/nginx/error.log
+  tag grl.nginx_error
+  pos_file /var/log/td-agent/nginx.error.pos
+  time_key time_local
+</source>
+
+<source>
+  @type tail
+  @id tail-syslog
+  <parse>
+    @type syslog
+  </parse>
+  path /var/log/syslog
+  tag grl.syslog
+  pos_file /var/log/td-agent/syslog.pos
+  time_key time_local
+</source>
+
+<source>
+  @type tail
+  @id tail-octobercms-log
+  format none
+  path {{ graylog_app_common_folder }}/storage/logs/system.log
+  tag grl.octobercms      
+  pos_file /var/log/td-agent/octobercms.pos
+  time_key time_local
+</source>
+
+<match grl.**>
+  @type gelf
+  host localhost
+  protocol tcp
+  port 12201
+  include_tag_key true
+  tag_key @log_name
+  index_name tdagent
+  include_timestamp true
+  <buffer>
+    flush_interval 5s
+  </buffer>
+</match>
+
+#<match grl.**>
+#  @type elasticsearch
+#  host localhost
+#  port 9200
+#  include_tag_key true
+#  tag_key @log_name
+#  index_name tdagent
+#  include_timestamp true
+#  flush_interval 5s
+#</match>
+

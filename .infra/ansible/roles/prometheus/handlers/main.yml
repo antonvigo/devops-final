@@ -1,0 +1,11 @@
+---
+- name: Reload prometheus
+  service:
+    name: prometheus
+    state: reloaded
+
+- name: Reload alertmanager
+  service:
+    name: alertmanager
+    state: reloaded
+

@@ -1,0 +1,4 @@
+---
+app_name: "october_cms"
+cert_email: "avgoremykin@gmail.com"
+nginx_root_dir: "/var/www/application"

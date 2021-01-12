@@ -1,0 +1,46 @@
+---
+- name: Add a new user
+  user:
+    name: "{{ item.user_id }}"
+    shell: /bin/bash
+    append: yes
+    groups: "{{ item.group }}"
+  with_items:
+    - "{{ users }}"
+
+- name: Add user to the sudoers
+  copy:
+    dest: "/etc/sudoers.d/{{ item.user_id }}"
+    content: "{{ item.user_id }} ALL=(ALL) NOPASSWD: ALL"
+    mode: "0440"
+  with_items:
+    - "{{ users }}"
+
+- name: Deploy SSH key
+  authorized_key:
+    user: "{{ item.user_id }}"
+    key: "{{ item.key }}"
+    state: present
+  with_items:
+    - "{{ users }}"
+
+- name: Disable password authentication
+  lineinfile:
+    dest: "/etc/ssh/sshd_config"
+    regexp: '^PasswordAuthentication'
+    line: "PasswordAuthentication no"
+    state: present
+    backup: yes
+  notify:
+    - restart ssh
+
+#- name: Disable root login
+#  lineinfile:
+#    dest: /etc/ssh/sshd_config
+#    regexp: '^PermitRootLogin'
+#    line: "PermitRootLogin no"
+#    state: present
+#    backup: yes
+#  notify:
+#    - restart ssh
+...

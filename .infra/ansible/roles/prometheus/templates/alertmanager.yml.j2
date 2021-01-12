@@ -1,0 +1,19 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname']
+  group_wait: 5s
+  group_interval: 5s
+  repeat_interval: 1h
+  receiver: "gmail-notifications"
+receivers:
+- name: "gmail-notifications"
+  email_configs:
+  - to: "{{ alert_dest_email }}"
+    from: "{{ gmail_account }}"
+    smarthost: smtp.gmail.com:587
+    auth_username: "{{ gmail_account }}"
+    auth_identity: "{{ gmail_account }}"
+    auth_password: "{{ gmail_token }}"
+    send_resolved: true

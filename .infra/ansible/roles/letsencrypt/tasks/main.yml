@@ -1,0 +1,51 @@
+---
+- name: Install package
+  apt:
+    update_cache: yes
+    name: 
+      - nginx
+      - letsencrypt
+    state: present
+
+- name: Generate dhparams file
+  shell: openssl dhparam -out /etc/nginx/dhparams.pem 2048
+  args:
+    creates: /etc/nginx/dhparams.pem
+
+- name: Create directory for letsencrypt
+  file: 
+    name: "/var/www/letsencrypt"
+    state: directory
+
+- name: Set config for letsencrypt task
+  template:
+    src: wo_ssl_cert.conf.j2
+    dest: "/etc/nginx/sites-available/{{ app_name }}.conf"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Restart nginx before letsencrypt
+  service:
+    name: nginx
+    state: restarted      
+
+- name: Create letsencrypt certificate
+  shell: letsencrypt certonly -n --webroot --agree-tos -w /var/www/letsencrypt -d {{ inventory_hostname }} -m {{ cert_email }}
+  args:
+    creates: /etc/letsencrypt/live/{{ inventory_hostname }}
+
+- name: Set final config with ssl
+  template:
+    src: vs_ssl_cert.conf.j2
+    dest: "/etc/nginx/sites-available/{{ app_name }}.conf"
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart nginx
+
+- name: Add letsencrypt cronjob for certificate renewal
+  cron:
+    name: letsencrypt_renewal
+    special_time: monthly
+    job: letsencrypt --renew-by-default certonly -n --webroot --agree-tos -w /var/www/letsencrypt -d {{ inventory_hostname }} -m {{ cert_email }} && service nginx reload

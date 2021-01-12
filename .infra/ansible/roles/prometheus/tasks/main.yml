@@ -1,0 +1,75 @@
+---
+- name: Install basic utils   
+  apt:
+    update_cache: yes
+    name: 
+      - curl
+    state: present
+
+- name: Create temporary folder
+  file:
+    path: "{{ temp_dir }}"
+    state: directory
+    mode: '0755'
+
+# ====> Install all prometheus components
+- name: Install services
+  script: "setup_{{ item }}.sh"
+  args:
+    creates: /usr/local/bin/{{ item }}
+  with_items: "{{ services }}"
+
+- name: Delete temporary folder
+  file:
+    path: "{{ temp_dir }}"
+    state: absent
+
+# ====> Set Prometheus configs
+- name: Set prometheus config file
+  copy:
+    src: prometheus.yml
+    dest: /etc/prometheus/prometheus.yml
+    owner: "{{ prmts_owner }}"
+    group: "{{ prmts_owner }}"
+    mode: 0644
+    backup: yes
+  notify: Reload prometheus
+
+- name: Set alert rules file
+  copy:
+    src: alert_rules.yml
+    dest: /etc/prometheus/alert_rules.yml
+    owner: "{{ prmts_owner }}"
+    group: "{{ prmts_owner }}"
+    mode: 0644
+    backup: yes
+  notify: Reload prometheus
+
+# ====> Set Alertmanager configs
+- name: Set alertmanager config file
+  template:
+    src: alertmanager.yml.j2
+    dest: /etc/alertmanager/alertmanager.yml
+    owner: "{{ am_owner }}"
+    group: "{{ am_owner }}"
+    mode: 0644
+    backup: yes
+  notify: Reload alertmanager
+
+# ====> Set and start all services
+- name: Set unit file
+  copy:
+    src: "{{ item }}.service"
+    dest: "/etc/systemd/system/{{ item }}.service"
+    owner: root
+    group: root
+    mode: 0644
+  with_items: "{{ services }}"
+
+- name: Start service
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  with_items: "{{ services }}"
+...

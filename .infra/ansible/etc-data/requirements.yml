@@ -1,0 +1,3 @@
+# ansible-galaxy install -r requirements.yml
+# for "postgre" role
+- src: community.general

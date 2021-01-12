@@ -1,0 +1,11 @@
+groups:
+- name: HW alerts
+  rules:
+    - alert: Low free disk space
+      expr: ((node_filesystem_avail_bytes * 100) / node_filesystem_size_bytes) < 10
+      for: 1m
+      labels:
+        severity: warning
+      annotations:
+         title: Low free space on {{ $labels.instance }}
+         description: On {{ $labels.instance }} device {{ $labels.device }} mounted on {{ $labels.mountpoint }} has low free space of {{ $value }}% 

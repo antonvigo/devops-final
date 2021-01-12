@@ -1,0 +1,118 @@
+---
+    - name: Install basic utils
+      apt:
+        update_cache: yes
+        name:
+          - zip
+          - unzip
+          - apache2-utils
+          - openjdk-11-jre-headless
+          - apt-transport-https
+          - uuid-runtime
+          - pwgen
+          - curl
+        state: present
+
+    - name: Create SWAP
+      script: "swap.sh"
+      args:
+        creates: /swapfile
+
+    - name: Install MongoDB and Elasticsearch
+      script: "mongodb-es.sh"
+      args:
+        creates: /etc/elasticsearch/elasticsearch.yml
+
+#    - name: Limit memory usage for ES
+#      shell: "sed -i 's/-Xms1g/-Xms256m/; s/-Xmx1g/-Xmx256m/' /etc/elasticsearch/jvm.options"
+#      args:
+#        warn: no
+#      tags:
+#        - reg
+
+    - name: Limit memory usage for ES
+      replace:
+        path: /etc/elasticsearch/jvm.options
+        regexp: '^(-Xm[sx])(\d+)\w'
+        replace: '\g<1>256m'
+      notify: restart Elasticsearch
+
+    - name: Restart MongoDB service
+      service:
+        name: mongod
+        state: restarted
+        enabled: yes
+
+    - name: Create temporary folder
+      file:
+        path: "{{ temp_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Download deb package with Graylog repo data
+      get_url:
+        url: "https://packages.graylog2.org/repo/packages/graylog-{{ graylog_vers }}-repository_latest.deb"
+        dest: "{{ temp_dir }}/graylog-{{ graylog_vers }}-repository_latest.deb"
+
+    - name: Add Graylog repo data
+      apt:
+        deb: "{{ temp_dir }}/graylog-{{ graylog_vers }}-repository_latest.deb"
+
+    - name: Install Graylog server
+      apt:
+        update_cache: yes
+        name:
+          - graylog-server
+        state: present
+
+    - name: Set Graylog config
+      template:
+        src: graylog_srv.conf.j2
+        dest: /etc/graylog/server/server.conf
+        owner: root
+        group: root
+        mode: 0644
+      notify: restart Graylog Server
+
+    - name: Install Fluentd
+      script: "fluentd.sh"
+      args:
+        creates: /etc/td-agent/td-agent.conf
+
+    - name: Set Fluentd config
+      template:
+        src: td-agent.conf.j2
+        dest: /etc/td-agent/td-agent.conf
+        owner: "root"
+        group: "root"
+        mode: 0644
+      notify: restart Fluentd
+
+    - name: Provide Fluentd user access to logs
+      user:
+        name: td-agent
+        groups: adm
+        append: yes
+
+    # ====> Set proxy access to Graylog
+    - name: Remove default-site config
+      file:
+        name: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: restart nginx
+
+    - name: Set virtual host config for Graylog
+      template:
+        src: graylog.conf.j2
+        dest: "/etc/nginx/sites-available/graylog.conf"
+        owner: root
+        group: root
+        mode: 0644
+      notify: restart nginx
+
+    - name: Create symbolic link to Graylog virtual host config
+      file:
+        src: "/etc/nginx/sites-available/graylog.conf"
+        dest: "/etc/nginx/sites-enabled/graylog.conf"
+        state: link
+      notify: restart nginx

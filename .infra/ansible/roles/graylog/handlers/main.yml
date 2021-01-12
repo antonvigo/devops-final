@@ -1,0 +1,23 @@
+---
+    - name: restart Elasticsearch
+      service:
+        name: elasticsearch
+        state: restarted
+        enabled: yes
+
+    - name: restart Graylog Server
+      service:
+        name: graylog-server
+        state: restarted
+        enabled: yes
+
+    - name: restart Fluentd
+      service:
+        name: td-agent
+        state: restarted
+        enabled: yes
+
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted

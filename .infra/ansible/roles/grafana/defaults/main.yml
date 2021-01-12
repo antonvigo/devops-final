@@ -1,0 +1,3 @@
+---
+    grafana_server_name: "grafana.{{ ansible_default_ipv4.address }}.nip.io"
+

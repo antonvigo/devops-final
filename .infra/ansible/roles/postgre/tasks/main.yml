@@ -1,0 +1,25 @@
+---
+- name: Install packages
+  apt:
+    update_cache: yes
+    name:
+      - postgresql
+      - python3-psycopg2
+      - libpq-dev
+    state: present
+
+- name: create postgresql user
+  postgresql_user:
+    user: "{{ postgre_db_user }}"
+    password: "{{ postgre_db_password }}"
+    role_attr_flags: "NOSUPERUSER"
+  become: yes
+  become_user: postgres
+
+- name: create postgresql db
+  postgresql_db:
+    name: "db_{{ app_name }}"
+    owner: "{{ postgre_db_user }}"
+    state: present
+  become: yes
+  become_user: postgres

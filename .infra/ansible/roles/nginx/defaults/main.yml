@@ -1,0 +1,3 @@
+---
+app_name: "october_cms"
+nginx_root_dir: "/var/www/application"

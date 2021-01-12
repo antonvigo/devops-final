@@ -1,0 +1,46 @@
+---
+- hosts:
+    - all
+#  vars:
+#    app_name: "october_cms"
+  vars_files:
+    - ./vars/main-vars.yml
+    - ./vaults/vault.yml
+  gather_facts: yes
+  remote_user: root
+  roles:
+    - users
+    - nginx
+    - letsencrypt
+    - postgre
+    - prometheus
+    - graylog
+    - grafana
+
+  tasks:
+    - name: Install application dependencies
+      apt:
+        update_cache: yes
+        name:
+          - git
+          - curl
+          - openssl
+          - php7.2
+          - php7.2-fpm
+          - php-zip
+          - php-common
+          - php-mbstring
+          - php-gd
+          - php-xml
+          - php-pgsql
+          - php-curl
+      tags:
+        - app_depend
+
+    - name: install Composer
+      get_url:
+        url: https://getcomposer.org/download/1.10.16/composer.phar
+        dest: /usr/local/bin/composer
+        mode: '0755'
+      tags:
+        - app_depend

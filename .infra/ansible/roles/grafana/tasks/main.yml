@@ -1,0 +1,62 @@
+---
+# ====> Install and configure Grafana
+    - name: Add Grafana repo gpg key
+      apt_key:
+        url: https://packages.grafana.com/gpg.key
+        state: present
+
+    - name: Add Grafana repo to list
+      apt_repository:
+        repo: deb https://packages.grafana.com/oss/deb stable main
+        state: present
+
+    - name: Install basic utils
+      apt:
+        update_cache: yes
+        name:
+          - nginx
+          - apt-transport-https
+          - software-properties-common
+          - grafana
+        state: present
+
+    - name: Add Prometheus data source to Grafana
+      copy:
+        src: prometheus.yaml
+        dest: /etc/grafana/provisioning/datasources/prometheus.yaml
+        mode: 0644
+
+    - name: restart Grafana
+      service:
+        name: grafana-server
+        state: restarted
+        enabled: yes
+
+# ====> Set proxy access to Grafana
+    - name: Remove default-site config
+      file:
+        name: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: restart nginx
+
+    - name: Set virtual host config for Grafana
+      template:
+        src: grafana.conf.j2
+        dest: "/etc/nginx/sites-available/grafana.conf"
+        owner: root
+        group: root
+        mode: 0644
+      notify: restart nginx
+
+#    - name: Fix server name in Nginx virtual host config for Grafana
+#      replace:
+#        path: /etc/nginx/sites-available/grafana.conf
+#        regexp: '\w+(\-\d{1,3}\-\d{1,3}\-\d{1,3}\-\d{1,3}\..+)'
+#        replace: 'grafana\g<1>'
+
+    - name: Create symbolic link to Grafana virtual host config
+      file:
+        src: "/etc/nginx/sites-available/grafana.conf"
+        dest: "/etc/nginx/sites-enabled/grafana.conf"
+        state: link
+      notify: restart nginx

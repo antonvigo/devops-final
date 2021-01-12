@@ -1,0 +1,30 @@
+---
+- name: Install packages
+  apt:
+    update_cache: yes
+    name:
+      - nginx
+      - php7.2
+      - php7.2-fpm
+    state: present
+
+- name: Remove default-site config
+  file:
+    name: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: restart nginx
+
+- name: Set virtual host config for application
+  template:
+    src: app_virtual_host.conf.j2
+    dest: "/etc/nginx/sites-available/{{ app_name }}.conf"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Create symbolic link to virtual host config
+  file:
+    src: "/etc/nginx/sites-available/{{ app_name }}.conf"
+    dest: "/etc/nginx/sites-enabled/{{ app_name }}.conf"
+    state: link
+  notify: restart nginx

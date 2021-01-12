@@ -1,0 +1,12 @@
+---
+temp_dir: "/root/tmp/"
+services:
+  - prometheus
+  - node_exporter
+  - alertmanager
+prmts_owner: "prometheus"
+am_owner: "alertmanager"
+gmail_account: "avgoremykin@gmail.com"
+gmail_token: "faketokenaaaaaaa"
+alert_dest_email: "unoume@gmail.com"
+

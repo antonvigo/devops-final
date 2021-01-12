@@ -1,0 +1,8 @@
+---
+temp_dir: "/root/tmp/"
+graylog_vers: "3.3"
+graylog_app_common_folder: "/opt/october_cms/common"
+graylog_server_name: "graylog.{{ ansible_default_ipv4.address }}.nip.io"
+graylog_secret: "abcabcabc"
+graylog_password_sha2: "abcabcabc"
+

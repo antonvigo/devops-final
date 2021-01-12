@@ -1,0 +1,5 @@
+---
+app_name: "october_cms"
+postgre_db_user: "user"
+postgre_db_password: "pass"
+
